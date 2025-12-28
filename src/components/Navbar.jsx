@@ -1,13 +1,15 @@
 // src/components/Navbar.jsx
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, GraduationCap, ChevronRight } from 'lucide-react';
+import { Menu, X, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Logo from './Logo'; // <--- IMPORTANTE: Importamos el nuevo logo
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const isHome = location.pathname === '/';
 
   // Detectar scroll para cambiar estilo
   useEffect(() => {
@@ -17,6 +19,17 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Lógica para el estilo de la barra:
+  // Si no estamos en home, siempre es blanca. Si estamos en home, depende del scroll.
+  const navbarStyle = (!isHome || scrolled) 
+    ? 'bg-white/95 backdrop-blur-xl shadow-md py-3 border-b border-gray-100' 
+    : 'bg-transparent py-6 border-b border-white/10';
+
+  // Lógica para el color de texto de los links:
+  const linkBaseColor = (!isHome || scrolled) ? "text-slate-600 hover:text-blue-900" : "text-white/90 hover:text-white";
+  const linkActiveColor = (!isHome || scrolled) ? "text-blue-900" : "text-white";
+  const mobileMenuButtonColor = (!isHome || scrolled) ? "text-slate-800" : "text-white";
 
   const navLinks = [
     { name: 'Inicio', path: '/' },
@@ -28,56 +41,41 @@ const Navbar = () => {
 
   return (
     <>
-      <nav 
-        className={`fixed w-full z-50 transition-all duration-300 border-b border-white/10 
-        ${scrolled 
-          ? 'bg-white/90 backdrop-blur-md shadow-lg py-2' 
-          : 'bg-white/70 backdrop-blur-sm py-4'
-        }`}
-      >
+      <nav className={`fixed w-full z-50 transition-all duration-500 ${navbarStyle}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             
-            {/* LOGO */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className={`p-2 rounded-lg transition-colors ${scrolled ? 'bg-blue-900 text-white' : 'bg-blue-600 text-white'}`}>
-                <GraduationCap size={28} />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-xl text-slate-800 leading-none group-hover:text-blue-700 transition-colors">
-                  Colegio Demo
-                </span>
-                <span className="text-[10px] text-slate-500 font-bold tracking-[0.2em] uppercase mt-1">
-                  Excelencia Educativa
-                </span>
-              </div>
+            {/* --- NUEVO LOGO --- */}
+            <Link to="/" className="group" onClick={() => window.scrollTo(0, 0)}>
+               {/* Le pasamos el estado 'scrolled' (o si no es home) al logo para que sepa qué color usar */}
+               <Logo scrolled={!isHome || scrolled} />
             </Link>
 
             {/* DESKTOP MENU */}
-            <div className="hidden md:flex items-center space-x-1">
+            <div className="hidden md:flex items-center space-x-2">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.path;
                 return (
                   <Link 
                     key={link.name} 
                     to={link.path} 
-                    className="relative px-4 py-2 text-sm font-medium text-slate-600 hover:text-blue-900 transition-colors"
+                    className={`relative px-4 py-2 text-sm font-bold transition-colors ${isActive ? linkActiveColor : linkBaseColor}`}
                   >
                     {link.name}
-                    {/* Línea animada si está activo */}
+                    {/* Línea animada */}
                     {isActive && (
                       <motion.div 
                         layoutId="underline"
-                        className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-full"
+                        className={`absolute bottom-0 left-0 w-full h-0.5 rounded-full ${(!isHome || scrolled) ? 'bg-blue-900' : 'bg-yellow-400'}`}
                       />
                     )}
                   </Link>
                 );
               })}
               
-              {/* Botón CTA destacado */}
+              {/* Botón CTA */}
               <div className="pl-4">
-                <button className="bg-slate-900 hover:bg-blue-900 text-white px-6 py-2.5 rounded-full font-bold text-sm transition-all shadow-md hover:shadow-lg flex items-center gap-2 transform hover:-translate-y-0.5">
+                <button className={`px-6 py-3 rounded-full font-bold text-sm transition-all shadow-lg flex items-center gap-2 transform hover:-translate-y-0.5 ${(!isHome || scrolled) ? 'bg-blue-900 text-white hover:bg-blue-800' : 'bg-white text-blue-900 hover:bg-blue-50'}`}>
                   Portal Alumnos
                   <ChevronRight size={16} />
                 </button>
@@ -88,40 +86,45 @@ const Navbar = () => {
             <div className="md:hidden">
               <button 
                 onClick={() => setIsOpen(!isOpen)} 
-                className="text-slate-700 hover:text-blue-900 p-2 transition-colors"
+                className={`p-2 transition-colors ${mobileMenuButtonColor}`}
               >
-                {isOpen ? <X size={28} /> : <Menu size={28} />}
+                {isOpen ? <X size={30} /> : <Menu size={30} />}
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* MOBILE MENU FULL SCREEN OVERLAY */}
+      {/* MOBILE MENU OVERLAY */}
       <AnimatePresence>
         {isOpen && (
           <motion.div 
             initial={{ opacity: 0, x: '100%' }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: "tween", duration: 0.3 }}
-            className="fixed inset-0 z-40 bg-white/95 backdrop-blur-xl md:hidden pt-24 px-6"
+            transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
+            className="fixed inset-0 z-40 bg-white/95 backdrop-blur-2xl md:hidden flex flex-col"
           >
-            <div className="flex flex-col space-y-4">
+            <div className="flex justify-end p-6 pt-8">
+               <button onClick={() => setIsOpen(false)} className="text-slate-800 bg-slate-100 p-2 rounded-full">
+                 <X size={28} />
+               </button>
+            </div>
+            <div className="flex flex-col space-y-2 px-8 pt-4 font-bold flex-grow justify-center">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`text-2xl font-bold border-b border-gray-100 pb-4 ${
-                    location.pathname === link.path ? 'text-blue-600 pl-4 border-l-4 border-l-blue-600' : 'text-slate-800'
+                  className={`text-3xl py-4 border-b border-gray-100 ${
+                    location.pathname === link.path ? 'text-blue-900' : 'text-slate-400'
                   }`}
                   onClick={() => setIsOpen(false)}
                 >
                   {link.name}
                 </Link>
               ))}
-              <button className="mt-8 w-full bg-blue-900 text-white py-4 rounded-xl font-bold text-lg shadow-xl">
-                Acceso Portal Alumnos
+              <button className="mt-12 w-full bg-blue-900 text-white py-5 rounded-2xl font-bold text-xl shadow-xl flex items-center justify-center gap-3">
+                Acceso Portal <ChevronRight/>
               </button>
             </div>
           </motion.div>
